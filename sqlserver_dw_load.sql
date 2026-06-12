@@ -1,7 +1,8 @@
-/*
+﻿/*
     Movie BI Warehouse - SQL Server setup and CSV load script
     Source CSV folder (exported by Python notebook):
-    D:\for school\business intel\movie 5000\processed\
+    E:\Giáo trình đại học\Năm 4\Kỳ 2\BI\business_intelligence\movie 5000\processed\
+    (see @BasePath below; edit it if this repo lives elsewhere)
 
     Run in SSMS with an account that has permission to create database/tables.
     Ensure SQL Server service account can read the CSV folder.
@@ -137,7 +138,7 @@ CREATE TABLE #stgBridgeMovieGenre
     GenreID    VARCHAR(20)     NULL
 );
 
-DECLARE @BasePath NVARCHAR(4000) = N'D:\for school\business intel\movie 5000\processed\';
+DECLARE @BasePath NVARCHAR(4000) = N'E:\Giáo trình đại học\Năm 4\Kỳ 2\BI\business_intelligence\movie 5000\processed\';
 DECLARE @SQL NVARCHAR(MAX);
 
 /* BULK INSERT helper settings for UTF-8 CSV with header */
@@ -235,13 +236,15 @@ INSERT INTO dw.FactMovies
 SELECT
     TRY_CONVERT(INT, NULLIF(LTRIM(RTRIM(MovieKey)), '')),
     TRY_CONVERT(INT, NULLIF(LTRIM(RTRIM(DateKey)), '')),
-    TRY_CONVERT(BIGINT, NULLIF(LTRIM(RTRIM(Budget)), '')),
-    TRY_CONVERT(BIGINT, NULLIF(LTRIM(RTRIM(Revenue)), '')),
+    /* Go through FLOAT so values like '237000000.0' still land as BIGINT/INT
+       instead of silently becoming NULL (TRY_CONVERT(BIGINT,'123.0') = NULL). */
+    TRY_CONVERT(BIGINT, TRY_CONVERT(FLOAT, NULLIF(LTRIM(RTRIM(Budget)), ''))),
+    TRY_CONVERT(BIGINT, TRY_CONVERT(FLOAT, NULLIF(LTRIM(RTRIM(Revenue)), ''))),
     TRY_CONVERT(DECIMAL(5,2), NULLIF(LTRIM(RTRIM(VoteAverage)), '')),
-    TRY_CONVERT(INT, NULLIF(LTRIM(RTRIM(VoteCount)), '')),
+    TRY_CONVERT(INT, TRY_CONVERT(FLOAT, NULLIF(LTRIM(RTRIM(VoteCount)), ''))),
     TRY_CONVERT(DECIMAL(18,6), NULLIF(LTRIM(RTRIM(Popularity)), '')),
     TRY_CONVERT(DECIMAL(6,2), NULLIF(LTRIM(RTRIM(Runtime)), '')),
-    TRY_CONVERT(BIGINT, NULLIF(LTRIM(RTRIM(Profit)), ''))
+    TRY_CONVERT(BIGINT, TRY_CONVERT(FLOAT, NULLIF(LTRIM(RTRIM(Profit)), '')))
 FROM #stgFactMovies
 WHERE TRY_CONVERT(INT, NULLIF(LTRIM(RTRIM(MovieKey)), '')) IS NOT NULL;
 
@@ -261,3 +264,4 @@ UNION ALL SELECT 'dw.DimMovieInfo', COUNT(1) FROM dw.DimMovieInfo
 UNION ALL SELECT 'dw.FactMovies', COUNT(1) FROM dw.FactMovies
 UNION ALL SELECT 'dw.BridgeMovieGenre', COUNT(1) FROM dw.BridgeMovieGenre;
 GO
+
