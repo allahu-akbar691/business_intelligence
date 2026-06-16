@@ -18,7 +18,6 @@ business_intelligence/
 │       ├── DimMovieInfo.csv
 │       ├── FactMovies.csv
 │       └── BridgeMovieGenre.csv
-├── CLAUDE.md               # Hướng dẫn cho Claude Code khi làm việc trong repo
 └── README.md
 ```
 
